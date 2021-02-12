@@ -45,7 +45,7 @@ export default class EditDialog extends Component {
   }
   fectgClusters = () => {
     axios
-      .get('/monitor/cluster')
+      .get('/cluster')
       .then((response) => {
         if (response.data.code === 200) {
           const data = this.resouceData(response.data.data);
@@ -250,6 +250,7 @@ export default class EditDialog extends Component {
       simpleFormDialog.width = '300px';
     }
 
+
     const okProps = { children: 'OK' };
     const cancelProps = { children: 'Cancel' };
     return (
@@ -371,22 +372,22 @@ export default class EditDialog extends Component {
 
               <Row style={styles.formRow}>
                 <Col span={`${isMobile ? '6' : '4'}`}>
-                  <label style={styles.formLabel}>Diapause:</label>
+                  <label style={styles.formLabel}>Time Window :</label>
                 </Col>
                 <Col span={`${isMobile ? '18' : '16'}`}>
                   <IceFormBinder name="dispause" required>
-                    <NumberPicker min={1} style={{ width: '100%' }} placeholder="Diapause(Minutes)" />
+                    <NumberPicker min={1} style={{ width: '100%' }} placeholder="Time Window(Minutes)" />
                   </IceFormBinder>
                   <IceFormError name="dispause" />
                 </Col>
               </Row>
               <Row style={styles.formRow}>
                 <Col span={`${isMobile ? '6' : '4'}`} style={styles.formLabel}>
-                  DisableAlerta:
+                  Disable Alerta:
                 </Col>
                 <Col span={`${isMobile ? '18' : '16'}`}>
                   <IceFormBinder name="disableAlerta">
-                    <Switch defaultChecked={this.state.value.disableAlerta} checked={this.state.value.disableAlerta} />
+                    <Switch checked={this.state.value.disableAlerta} />
                   </IceFormBinder>
                   <IceFormError name="disableAlerta" />
                 </Col>

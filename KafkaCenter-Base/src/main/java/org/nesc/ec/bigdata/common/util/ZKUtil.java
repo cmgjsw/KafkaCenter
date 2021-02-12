@@ -1,36 +1,35 @@
 package org.nesc.ec.bigdata.common.util;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
+import com.alibaba.fastjson.JSONObject;
+import kafka.utils.ZKStringSerializer;
 import org.I0Itec.zkclient.ZkClient;
 import org.I0Itec.zkclient.exception.ZkMarshallingError;
 import org.I0Itec.zkclient.serialize.ZkSerializer;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.data.Stat;
-
-import com.alibaba.fastjson.JSONObject;
 import org.nesc.ec.bigdata.common.model.BrokerInfo;
 import org.nesc.ec.bigdata.common.model.TopicInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import kafka.utils.ZKStringSerializer;
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * @author Truman.P.Du
- * @date 2019年4月12日 上午10:19:35
+ * @date 2019年4月12日 上午10:19:35O
  * @version 1.0
  */
 public class ZKUtil implements Closeable {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(ZKUtil.class);
 	private ZkClient zkClient;
 	private int SESSIONT_IMEOUT = 1000 * 60;
 	private int CONNECTION_TIMEOUT = 1000 * 60;
-	private static final java.lang.String brokerPath = "/brokers/topics/";
-	private static final String TopicConfigChangesPath = "/config/changes";
-	private static final String TopicConfigChangeZnodePrefix = "config_change_";
+	private static final java.lang.String BROKER_PATH = "/brokers/topics/";
+	private static final String TOPIC_CONFIG_CHANGES_PATH = "/config/changes";
+	private static final String TOPIC_CONFIG_CHANGE_ZNODE_PREFIX = "config_change_";
 	private String rootPath = "";
 	public ZKUtil(String zkServers) {
 		String lastChar = zkServers.substring(zkServers.length()-1, zkServers.length());
@@ -87,7 +86,7 @@ public class ZKUtil implements Closeable {
 						result.put(patition, map);
 					}
 				} catch (Exception e) {
-					e.printStackTrace();
+					LOGGER.error("", e);
 				}
 
 			});
@@ -96,23 +95,28 @@ public class ZKUtil implements Closeable {
 		String ownersPath = rootPath + "/consumers/" + groupId + "/owners/" + topic;
 		if (zkClient.exists(ownersPath)) {
 			List<String> owners = zkClient.getChildren(ownersPath);
-			owners.forEach(patition -> {
-				try {
+			if(owners!=null && !owners.isEmpty()){
+				owners.forEach(patition -> {
 					try {
-						String owner = zkClient.readData(ownersPath + "/" + patition, true);
-						if (owner != null) {
-							Map<String, String> map = result.get(patition);
-							map.put("owner", owner);
-							result.put(patition, map);
+						try {
+							String owner = zkClient.readData(ownersPath + "/" + patition, true);
+							if (owner != null) {
+								Map<String, String> map = result.get(patition);
+								if(map != null){
+									map.put("owner", owner);
+									result.put(patition, map);
+								}
+							}
+						} catch (Exception e) {
+							LOGGER.error("", e);
 						}
 					} catch (Exception e) {
-						e.printStackTrace();
+						LOGGER.error("", e);
 					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
 
-			});
+				});
+			}
+
 		}
 
 		return result;
@@ -161,10 +165,10 @@ public class ZKUtil implements Closeable {
 							result.put(partition,owner);
 						}
 					} catch (Exception e) {
-						e.printStackTrace();
+						LOGGER.error("", e);
 					}
 				} catch (Exception e) {
-					e.printStackTrace();
+					LOGGER.error("", e);
 				}
 			}
 
@@ -202,7 +206,7 @@ public class ZKUtil implements Closeable {
 		try {
 			data = zkClient.readData(path, stat);
 		} catch (Exception e) {
-			//			LOG.warn("Path: " + path + " do not exits in ZK!" + e.getMessage());
+			LOGGER.warn("zk read data error." ,e);
 		}
 		return new ZkDataAndStat(data, stat);
 	}
@@ -212,7 +216,7 @@ public class ZKUtil implements Closeable {
 		try {
 			List<String> ids = zkClient.getChildren(rootPath + "/brokers/ids");
 			for (String id : ids) {
-				String brokerInfo = new String(readDataMaybeNull(rootPath + "/brokers/ids/" + id).getData());
+				String brokerInfo = readDataMaybeNull(rootPath + "/brokers/ids/" + id).getData();
 				BrokerInfo bi = new BrokerInfo();
 				bi.setBid(Integer.parseInt(id));
 				JSONObject jsonObj = JSONObject.parseObject(brokerInfo);
@@ -239,7 +243,7 @@ public class ZKUtil implements Closeable {
 	}
 
 	public JSONObject descConfig(String topicName) {
-		String configInfo = new String(readDataMaybeNull(rootPath + "/config/topics/"+topicName).getData());
+		String configInfo = readDataMaybeNull(rootPath + "/config/topics/"+topicName).getData();
 		JSONObject configObj = JSONObject.parseObject(configInfo);
 		return configObj.getJSONObject("config");
 	}	
@@ -247,7 +251,7 @@ public class ZKUtil implements Closeable {
 	public boolean updateConfig(JSONObject entry,String topicName) {
 		boolean flag = false;
 		try {
-			String configInfo = new String(readDataMaybeNull(rootPath + "/config/topics/"+topicName).getData());
+			String configInfo = readDataMaybeNull(rootPath + "/config/topics/"+topicName).getData();
 			JSONObject obj = JSONObject.parseObject(configInfo);
 			JSONObject configObj = obj.getJSONObject("config");	
 			configObj.clear();
@@ -269,18 +273,18 @@ public class ZKUtil implements Closeable {
 	public boolean createNofity(String topicName) {
 		boolean flag = false;
 		try {
-			if(!zkClient.exists(TopicConfigChangesPath)) {
-				zkClient.createPersistent(TopicConfigChangesPath);
+			if(!zkClient.exists(TOPIC_CONFIG_CHANGES_PATH)) {
+				zkClient.createPersistent(TOPIC_CONFIG_CHANGES_PATH);
 			}
 			Map<String,Object> map = new LinkedHashMap<>();
 			map.put("version", 1);
 			map.put("entity_type","topics");
 			map.put("entity_name", topicName);
-		    zkClient.create(rootPath+TopicConfigChangesPath+"/"+TopicConfigChangeZnodePrefix, 
+		    zkClient.create(rootPath+ TOPIC_CONFIG_CHANGES_PATH +"/"+ TOPIC_CONFIG_CHANGE_ZNODE_PREFIX,
 					JSONObject.toJSONString(map), CreateMode.PERSISTENT_SEQUENTIAL);
 			flag = true;
 		} catch (Exception e) {
-			e.printStackTrace();
+			LOGGER.error("", e);
 			flag = false;
 		}
 		return flag;
@@ -297,21 +301,21 @@ public class ZKUtil implements Closeable {
 	}
 
 	public String getTopicPath(String topic) {
-		return brokerPath+topic;
+		return BROKER_PATH +topic;
 	}
 
 	public String getPartitionPath(String topic) {
-		return brokerPath+topic+"/partitions";
+		return BROKER_PATH +topic+"/partitions";
 	}
 
 	public Map<Integer, TopicInfo> readPartition(String topicName) {
-		String partition = new String(readDataMaybeNull(rootPath +"/brokers/topics/"+topicName).getData());
+		String partition = readDataMaybeNull(rootPath +"/brokers/topics/"+topicName).getData();
 		JSONObject partitionObj = JSONObject.parseObject(partition).getJSONObject("partitions");
 		List<String> partitions = zkClient.getChildren(rootPath + "/brokers/topics/"+topicName+"/partitions");
 		Map<Integer,TopicInfo> topics = new HashMap<>();
 		if(!partitions.isEmpty()) {
 			for(String state:partitions) {
-				String replicateData = new String(readDataMaybeNull(rootPath + "/brokers/topics/"+topicName+"/partitions/"+state+"/state").getData());
+				String replicateData = readDataMaybeNull(rootPath + "/brokers/topics/"+topicName+"/partitions/"+state+"/state").getData();
 				JSONObject replicateObj = JSONObject.parseObject(replicateData);
 				TopicInfo topicInfo = new TopicInfo();
 				topicInfo.setTopicName(topicName);			
@@ -334,7 +338,7 @@ public class ZKUtil implements Closeable {
 	public boolean createPartitionPath(String topicName,int currentPartition,Map<Integer,List<Integer>> data) {
 		boolean flag = false;
 		try {
-			String topicPartition = new String(readDataMaybeNull(rootPath + getTopicPath(topicName)).getData());
+			String topicPartition = readDataMaybeNull(rootPath + getTopicPath(topicName)).getData();
 
 			JSONObject partitionObj = JSONObject.parseObject(topicPartition);
 			JSONObject configObj = partitionObj.getJSONObject("partitions");
@@ -398,7 +402,6 @@ public class ZKUtil implements Closeable {
 
 	/**
 	 * 获取所有消费组
-	 * @param path
 	 * @return
 	 */
 	public Set<String> listConsumerGroups() {

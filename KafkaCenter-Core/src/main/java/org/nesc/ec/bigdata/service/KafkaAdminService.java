@@ -1,20 +1,21 @@
 package org.nesc.ec.bigdata.service;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.*;
-
 import org.apache.kafka.clients.CommonClientConfigs;
+import org.nesc.ec.bigdata.common.util.KafkaAdmins;
+import org.nesc.ec.bigdata.mapper.ClusterInfoMapper;
 import org.nesc.ec.bigdata.model.ClusterInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import org.nesc.ec.bigdata.common.util.KafkaAdmins;
-import org.nesc.ec.bigdata.mapper.ClusterInfoMapper;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.Callable;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
 
 @Service		 
 public class KafkaAdminService {
@@ -73,10 +74,10 @@ public class KafkaAdminService {
 			props.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, brokerAddr);
 		    admin = new KafkaAdmins(props);
 			if(admin!=null) {
-                flag = true;
-            }
+				flag = true;
+			}
 		} catch (Exception e) {
-
+			LOGGER.warn("connect kafka error.",e);
 		}finally {
 			try {
 				if(admin!=null) {
@@ -104,8 +105,11 @@ public class KafkaAdminService {
 						validateKafkaAddress = true;
 					}
 				}catch (Exception e){
+					LOGGER.warn("connect kafka error.",e);
 				}finally {
-					admin.close();
+					if(admin!=null){
+						admin.close();
+					}
 				}
 				return validateKafkaAddress;
 			}
@@ -119,7 +123,7 @@ public class KafkaAdminService {
 				flag = true;
 			}
 		}catch (Exception e) {
-			LOGGER.warn("validateKafkaAddress  result is inactive");
+			LOGGER.warn("validateKafkaAddress  result is inactive",e);
 		}
 		return flag;
 	}

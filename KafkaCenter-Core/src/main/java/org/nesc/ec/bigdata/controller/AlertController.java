@@ -79,12 +79,12 @@ public class AlertController extends BaseController {
 			if(initConfig.getAdminname().equalsIgnoreCase(user.getName())){
 				user.setId(0L);
 			}
-			alertMap.setOwnerId(user.getId());
 			if(alertMap.getId()!=null) {
 				if(alertService.update(alertMap)) {
 					return SUCCESS("Update Alter Success");
 				}
 			}else {
+				alertMap.setOwnerId(user.getId());
 				if(!alertService.exites(alertMap)) {
 					if(alertService.insert(alertMap)) {
 						return SUCCESS("Add Alter Success");
@@ -103,6 +103,7 @@ public class AlertController extends BaseController {
 
 	}
 
+	/** delete alert by id*/
 	@DeleteMapping(value = "/delete/{id}")
 	public RestResponse delete(@PathVariable String id) {
 		try {
@@ -117,6 +118,7 @@ public class AlertController extends BaseController {
 
 	}
 
+	/** Update Alert is enabled */
 	@PutMapping(value="/update/enable")
 	public RestResponse updateEnable(@RequestBody Map<String,Object> map){
 		try {
@@ -130,11 +132,12 @@ public class AlertController extends BaseController {
 		return ERROR("update task enable errors!");
 	}
 
+	/** Get the full alert according to ClusterID */
 	@GetMapping(value = "")
 	public RestResponse getALL(@RequestParam("cluster") String clusterId) {
 		try {
 			List<AlertGoup> results = "-1".equalsIgnoreCase(clusterId)?
-					alertService.getAlertGoups():alertService.selectAllByClusterId(clusterId);
+					alertService.getAlertGroups():alertService.selectAllByClusterId(clusterId);
 			List<AlterVo> result = new ArrayList<>();
 			results.forEach(alter->{
 				if(alter.getCluster()!=null || alter.getClusterId()!=null) {
@@ -153,7 +156,7 @@ public class AlertController extends BaseController {
 					alterVo.setDisableAlerta(alter.isDisableAlerta());
 					alterVo.setEnable(alter.isEnable());
 					if(alter.getOwner()==null) {
-						alterVo.setOwner(Constants.Role.MASTER);
+						alterVo.setOwner(Constants.Role.ADMIN);
 					}else {
 						alterVo.setOwner(Optional.ofNullable(alter.getOwner().getName()).orElse(""));
 						alterVo.setOwnerId(Optional.ofNullable(alter.getOwner().getId()).orElse(-1L));
@@ -179,6 +182,7 @@ public class AlertController extends BaseController {
 		return SUCCESS_DATA(monitorService.getTopicList(clusterId));
 	}
 
+	/** Get the consumer group according to clusterId and topic name*/
 	@PostMapping("/group")
 	public RestResponse getGroupByCluster(@RequestBody Map<String, String> queryMap) {
 		String clusterID = queryMap.get(Constants.KeyStr.CLUSTERID);

@@ -5,6 +5,11 @@ import BrokerList from './components/Broker';
 
 
 export default class Broker extends Component {
+  constructor(props){
+    super(props);
+  }
+
+  
   render() {
     const breadcrumb = [
       {
@@ -12,7 +17,7 @@ export default class Broker extends Component {
         text: 'Kafka Manager',
       },
       {
-        link: 'javascript:window.location.reload();',
+        link: '',
         text: 'Broker',
       },
     ];

@@ -37,8 +37,9 @@ public class ClusterInfo {
     @TableField(value = "graf_addr")
     private String grafAddr;
 
-
     private String comments;
+
+
 
     public String getGrafAddr() {
         return grafAddr;
@@ -120,4 +121,11 @@ public class ClusterInfo {
         this.comments = comments;
     }
 
+    @Override
+    public String toString() {
+        return "ClusterInfo{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                '}';
+    }
 }

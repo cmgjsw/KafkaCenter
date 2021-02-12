@@ -28,7 +28,9 @@ export default class Console extends Component {
     jsonView: null,
     mounted: true,
   };
-  ws = new WebSocket(window.location.host.indexOf('4444') > 0 ? 'ws://127.0.0.1:8080/ksql_console' : `ws://${window.location.host}/ksql_console`);
+
+  // eslint-disable-next-line no-nested-ternary
+  ws = new WebSocket(window.location.host.indexOf('3333') > 0 ? 'ws://127.0.0.1:8080/ksql_console' : (window.location.protocol === 'http:' ? `ws://${window.location.host}/ksql_console` : `wss://${window.location.host}/ksql_console`));
 
 
   customAceEditorCompleter = {
@@ -58,6 +60,7 @@ export default class Console extends Component {
     this.ws.onopen = () => {
       this.setState({ runStatus: false, stopStatus: true });
     };
+
 
     this.ws.onclose = () => {
       if (!this.state.mounted) {
@@ -107,6 +110,7 @@ export default class Console extends Component {
       } catch (error) {
         const jsonView = (<JSONPretty id="json-pretty" data={msg.data} keyStyle="color:#008080;font-size:1.5em" valueStyle="color:#0f1e78;font-size:1.5em" />);
         this.setState({ jsonView, runStatus: false, stopStatus: true });
+        this.onStop();
         console.error(error);
       }
     };
@@ -252,6 +256,8 @@ export default class Console extends Component {
     });
   }
 
+ 
+
 
   render() {
     const { results, jsonView } = this.state;
@@ -299,11 +305,11 @@ export default class Console extends Component {
               <Divider dashed />
               <Row>
                 <Col span="12" >
-                  <Row><a href="javascript:void(0)" onClick={this.onAddQueryProperties} style={{ display: 'block', textAlign: 'left', textDecoration: 'underline' }} >Add query properties</a></Row>
+                  <Row><Button text onClick={this.onAddQueryProperties} style={{ display: 'block', color:'blue', textAlign: 'left', textDecoration: 'underline' }}>Add query properties</Button></Row>
                   <div style={{ display: this.state.queryPropertiesStatus ? '' : 'none' }}>
                     {this.state.queryPropertiesShow.map((obj) => { return obj; })}
                     <Row>&nbsp;</Row>
-                    <Row><a href="javascript:void(0)" onClick={this.onAddAnotherProperties} style={{ display: 'block', textAlign: 'left', textDecoration: 'underline' }} >Add another field</a></Row>
+                    <Row><Button text onClick={this.onAddAnotherProperties} style={{ display: 'block', color:'blue', textAlign: 'left', textDecoration: 'underline' }}>Add another field</Button></Row>
                   </div>
 
                 </Col>

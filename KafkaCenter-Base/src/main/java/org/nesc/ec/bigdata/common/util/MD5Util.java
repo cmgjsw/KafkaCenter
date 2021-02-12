@@ -1,10 +1,14 @@
 package org.nesc.ec.bigdata.common.util;
 
 import org.nesc.ec.bigdata.common.constant.Constant;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.security.MessageDigest;
 
 public class MD5Util {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(MD5Util.class);
     /***
      * MD5加密
      * 使用JDK自带 MessageDigest
@@ -13,10 +17,9 @@ public class MD5Util {
     public static String string2MD5(String inStr){
         MessageDigest md5 = null;
         try{
-            md5 = MessageDigest.getInstance(Constant.ENCRYPTION.MD5);
+            md5 = MessageDigest.getInstance(Constant.Encryption.MD5);
         }catch (Exception e){
-            System.out.println(e.toString());
-            e.printStackTrace();
+            LOGGER.warn("", e);
             return "";
         }
         char[] charArray = inStr.toCharArray();
@@ -30,7 +33,7 @@ public class MD5Util {
         for (byte md5Byte : md5Bytes) {
             int val = ((int) md5Byte) & 0xff;
             if (val < 16) {
-                hexValue.append(Constant.NUM.ZERO);
+                hexValue.append(Constant.Num.ZERO);
             }
             hexValue.append(Integer.toHexString(val));
         }

@@ -76,6 +76,16 @@ public class TeamInfoService {
 	}
 
 	/**
+	 * 是否允许查询数据，主要是验证修改team的场景
+	 * @param team
+	 * @return
+	 */
+	public boolean isAllowUpdate(TeamInfo team) {
+		int count = teamInfoMapper.countTeamByName(team.getId(),team.getName());
+		return count>0?false:true;
+	}
+
+	/**
 	 * query team info by teamName
 	 * @param teamName teamName
 	 * @return List<TeamInfo>
@@ -124,13 +134,10 @@ public class TeamInfoService {
 	public List<TeamInfo> getTeamsByTeamIDs(List<Long> teamIDs) {
     	EntityWrapper<TeamInfo> queryWrapper = new EntityWrapper<>();
     	if (teamIDs == null || teamIDs.isEmpty()){
-			List<TeamInfo> teamInfos= null;
-    		return teamInfos;
-
-		}else {
-			queryWrapper.in(TEAM_TABLE_TEAM_ID, teamIDs);
-			return teamInfoMapper.selectList(queryWrapper);
+    		return null;
 		}
+		queryWrapper.in(TEAM_TABLE_TEAM_ID, teamIDs);
+		return teamInfoMapper.selectList(queryWrapper);
 	}
 
 	public boolean isRelatedTopic(Long teamId) {

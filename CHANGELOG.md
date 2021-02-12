@@ -1,3 +1,31 @@
+# 2.3.0 (2020-9-26)
+### Features / Enhancements
+* add new home page
+* add topic file size
+* enhance producer monitor
+* rebuilt cluster module
+### Bug Fixes
+* fix some bug
+# 2.2.0 (2020-7-31)
+### Features / Enhancements
+* add monitor consumer lag api
+* update login background
+* Missing English Translations / Improvable English Translations
+* upgrade ice-script to ice.js and rebuild frontend code
+### Bug Fixes
+* fix consumer lag bug
+* fix KafkaManager add topic bug
+# 2.1.1 (2020-7-30)
+###Features / Enhancements
+* add broker size
+* modify alertMail templates
+### Bug Fixes
+* support ksql 0.9.0
+# 2.1.0 (2020-5-20)
+### Features / Enhancements
+* support jdk1.8
+* add ci support
+* fix bug
 # 2.0.0 (2020-3-25)
 ### Features / Enhancements
 * add ksql feature

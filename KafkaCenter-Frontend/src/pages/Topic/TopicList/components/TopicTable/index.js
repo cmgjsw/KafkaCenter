@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Table, Message, Tab, Dialog, Grid, Select } from '@alifd/next';
+import { Table, Message, Dialog, Grid, Select } from '@alifd/next';
 import FoundationSymbol from '@icedesign/foundation-symbol';
 import dayjs from 'dayjs';
 import {
@@ -8,43 +8,47 @@ import {
   FormError as IceFormError,
 } from '@icedesign/form-binder';
 import axios from '@utils/axios';
-import { sortData, sortDataByOrder } from '@utils/dataFormat';
+import Auth from '@components/Auth'
+import {  sort,bytesToSize } from '@utils/dataFormat';
 import CustomPagination from '@components/CustomPagination';
 import CustomTableFilter from '@components/CustomTableFilter';
-import RenderAuthorized from '@components/Authorized';
-import { getAuthority } from '@utils/authority';
+
 import { getPersonalityCluster } from '@utils/cookies';
 import Producer from '../Producer';
 import DetailDialog from '../DetailDialog';
 
 
-const Authorized = RenderAuthorized(getAuthority());
 const { Row, Col } = Grid;
 
 export default class TopicTable extends Component {
-  state = {
-    isQueries: false,
-    queriesRecord: {},
-    isLoading: false,
-    pageData: [],
-    isMobile: false,
-    uvisable: false,
-    dialogObj: {
-      record: {},
-      visible: false,
-    },
-    value: {},
-    teamData: [],
-    ownerData: [],
-    spanCluster: '',
-    filterDataSource: [],
-    dataSource: [],
-  };
+  
+
+  constructor(){
+    super();
+    this.state = {
+      isQueries: false,
+      queriesRecord: {},
+      isLoading: false,
+      pageData: [],
+      isMobile: false,
+      uvisable: false,
+      dialogObj: {
+        record: {},
+        visible: false,
+      },
+      value: {},
+      teamData: [],
+      ownerData: [],
+      spanCluster: '',
+      filterDataSource: [],
+      dataSource: [],
+    };
+  }
 
   componentWillMount() {
     this.mounted = true;
-    // this.fetchData();
   }
+
   componentWillUnmount = () => {
     this.mounted = false;
   }
@@ -114,7 +118,7 @@ export default class TopicTable extends Component {
           if (response.data.code === 200) {
             if (this.mounted) {
               const switchValue = sessionStorage.getItem('topicTopicListSwitch') == null ? false : sessionStorage.getItem('topicTopicListSwitch');
-              let data = sortData(response.data.data, 'topicName');
+              let data = sort(response.data.data, 'topicName');
               const oldData = data;
               if (!switchValue || switchValue === 'false') {
                 data = data.filter(v => !v.topicName.startsWith('_'));
@@ -144,7 +148,7 @@ export default class TopicTable extends Component {
   };
 
   onSort(value, order) {
-    const dataSource = sortDataByOrder(this.state.dataSource, value, order);
+    const dataSource = sort(this.state.dataSource, value, order);
     this.refreshTableData(dataSource);
   }
 
@@ -153,6 +157,18 @@ export default class TopicTable extends Component {
       filterDataSource: value,
     });
   }
+
+  renderBytes= (value) => {
+    if (value !== null && value) {
+      if(value===-1){
+        return '-';
+      }
+      return bytesToSize(value);
+    }else if(value===0){
+      return bytesToSize(0);
+    }
+    return '-';
+  };
 
 
   handelDetail = (record) => {
@@ -194,15 +210,14 @@ export default class TopicTable extends Component {
             Mock
           </a>
         </span>
-        <Authorized authority="admin">
+        <Auth rolename="admin">
           <span style={styles.separator} />
           <span title="Modify" style={styles.operBtn} >
             <a style={styles.link} onClick={() => this.handleUpdate(record)}>
               Modify
             </a>
           </span>
-        </Authorized>
-
+        </Auth>
       </div>
     );
   };
@@ -314,11 +329,12 @@ export default class TopicTable extends Component {
           />
           <Table loading={isLoading} dataSource={this.state.pageData} hasBorder={false} onSort={(value, order) => this.onSort(value, order)}>
             <Table.Column title="Topic Name" dataIndex="topicName" sortable />
+            <Table.Column title="File Size" dataIndex="fileSize" cell={this.renderBytes} sortable />
             <Table.Column title="Cluster" dataIndex="cluster.name" />
             <Table.Column title="Create Date" dataIndex="createTime" cell={this.renderTime} />
             <Table.Column title="Owner" dataIndex="owner" cell={this.renderTopic} />
             <Table.Column title="Team" dataIndex="team" cell={this.renderTopic} />
-            <Table.Column title="操作" cell={this.renderOper} />
+            <Table.Column title="Operation" cell={this.renderOper} />
           </Table>
           <CustomPagination dataSource={this.state.filterDataSource} redrawPageData={this.redrawPageData} />
           <Dialog
@@ -337,9 +353,9 @@ export default class TopicTable extends Component {
             cancelProps={cancelProps}
           >
             <IceFormBinderWrapper ref={(ref) => {
-            this.refForm = ref;
-          }}
-              value={this.state.value}
+              this.refForm = ref;
+            }}
+            value={this.state.value}
             >
               <div >
                 <Row style={styles.formRow} >
@@ -372,8 +388,8 @@ export default class TopicTable extends Component {
                         placeholder="please select team"
                         style={{ width: '100%' }}
                         onChange={(value, action, item) => {
-                      this.onTeamChange(value, action, item);
-                    }}
+                          this.onTeamChange(value, action, item);
+                        }}
                         disabled={this.state.value.disabled}
                       />
                     </IceFormBinder>
